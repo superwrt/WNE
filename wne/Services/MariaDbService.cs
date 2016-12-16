@@ -29,13 +29,19 @@ namespace wne.Services
         public override void Setup(Ini Settings)
         {
             var binDir = Main.StartupPath.Replace(@"\", "/") + "/mariadb/bin/";
-            if (!Directory.Exists(dataDir)) {
-                Directory.CreateDirectory(dataDir);
-                Process.Start(binDir +
-                    "mysql_install_db  -D -d \"" +
-                    Main.StartupPath + "/data/mariadb/\"");
+            try
+            {
+                if (!Directory.Exists(dataDir))
+                {
+                    Directory.CreateDirectory(dataDir);
+                    Process.Start(binDir +
+                        "mysql_install_db  -D -d \"" +
+                        Main.StartupPath + "/data/mariadb/\"");
+                }
             }
+            catch (Exception ex) { }
             base.Setup(Settings);
+
         }
     }
 }

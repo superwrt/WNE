@@ -251,6 +251,11 @@ namespace wne.Config
             UpdateEnverionments(iniFile);
             iniFile.Save(iniFileName);
 
+            if (!Directory.Exists(Main.StartupPath + "/conf"))
+            {
+                Directory.CreateDirectory(Main.StartupPath + "/conf");
+            }
+
             SaveNginxPHPConfig();
             SaveMariaDbConfig();
             SaveMongoDbConfig();
@@ -261,76 +266,88 @@ namespace wne.Config
         {
             ushort port = PhpPort.Value;
             uint PHPProcesses = PhpProcesses.Value;
-
-            using (var sw = new StreamWriter(Main.StartupPath + "/conf/nginx/geg/php_processes.conf"))
+            try
             {
-                sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
-                sw.WriteLine("upstream php_processes {");
-                for (var i = 1; i <= PHPProcesses; i++)
+                using (var sw = new StreamWriter(Main.StartupPath + "/conf/nginx/gen/php_processes.conf"))
                 {
-                    sw.WriteLine("    server 127.0.0.1:" + port + " weight=1;");
-                    port++;
+                    sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
+                    sw.WriteLine("upstream php_processes {");
+                    for (var i = 1; i <= PHPProcesses; i++)
+                    {
+                        sw.WriteLine("    server 127.0.0.1:" + port + " weight=1;");
+                        port++;
+                    }
+                    sw.WriteLine("}");
                 }
-                sw.WriteLine("}");
             }
+            catch (Exception ex) { }
         }
 
         private void SaveMariaDbConfig()
         {
-            var basePath = Main.StartupPath.Replace(@"\", "/");
-            var confPath = Main.StartupPath + "/conf/mariadb/my.ini";
-            var iniFile = new IniFile.IniFile(confPath);
-            var port = MariaDbPort.Value.ToString();
+            try
+            {
+                var basePath = Main.StartupPath.Replace(@"\", "/");
+                var confPath = Main.StartupPath + "/conf/mariadb/my.ini";
+                var iniFile = new IniFile.IniFile(confPath);
+                var port = MariaDbPort.Value.ToString();
 
-            //iniFile.Section("mysqld").Set("basedir", Main.StartupPath);
-            iniFile.Section("mysqld").Set("datadir", basePath + "/data/mariadb");
-            iniFile.Section("mysqld").Set("tmpdir", basePath + "/tmp");
-            iniFile.Section("mysqld").Set("innodb_data_home_dir", basePath + "/data/mariadb");
-            iniFile.Section("mysqld").Set("innodb_log_group_home_dir", basePath + "/data/mariadb");
+                //iniFile.Section("mysqld").Set("basedir", Main.StartupPath);
+                iniFile.Section("mysqld").Set("datadir", basePath + "/data/mariadb");
+                iniFile.Section("mysqld").Set("tmpdir", basePath + "/tmp");
+                iniFile.Section("mysqld").Set("innodb_data_home_dir", basePath + "/data/mariadb");
+                iniFile.Section("mysqld").Set("innodb_log_group_home_dir", basePath + "/data/mariadb");
 
-            iniFile.Section("client").Set("port", port);
-            iniFile.Section("mysqld").Set("port", port);
+                iniFile.Section("client").Set("port", port);
+                iniFile.Section("mysqld").Set("port", port);
 
-            iniFile.Section("mysqld").Set("character_set_server", MariaDbCharset.Value.ToString());
-            iniFile.Section("mysqld").Set("bind-address", MariaDbBind.Value.ToString());
+                iniFile.Section("mysqld").Set("character_set_server", MariaDbCharset.Value.ToString());
+                iniFile.Section("mysqld").Set("bind-address", MariaDbBind.Value.ToString());
 
-            iniFile.Save(confPath);
+                iniFile.Save(confPath);
+            }
+            catch (Exception ex) { }
         }
 
         private void SaveMongoDbConfig()
         {
             var basePath = Main.StartupPath.Replace(@"\", "/");
-
-            using (var sw = new StreamWriter(Main.StartupPath + "/conf/mongodb/mongodb.conf"))
-            {
-                sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
-                sw.WriteLine("dbpath=" + basePath + "/data/mongodb/");
-                sw.WriteLine("logpath=" + basePath + "/logs/mongodb/mongodb.log");
-                if (MongoDbBind.Value.Length > 0)
-                    sw.WriteLine("bind_ip=" + MongoDbBind.Value);
-                sw.WriteLine("port=" + MongoDbPort.Value);
+            try {
+                using (var sw = new StreamWriter(Main.StartupPath + "/conf/mongodb/mongodb.conf"))
+                {
+                    sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
+                    sw.WriteLine("dbpath=" + basePath + "/data/mongodb/");
+                    sw.WriteLine("logpath=" + basePath + "/logs/mongodb/mongodb.log");
+                    if (MongoDbBind.Value.Length > 0)
+                        sw.WriteLine("bind_ip=" + MongoDbBind.Value);
+                    sw.WriteLine("port=" + MongoDbPort.Value);
+                }
             }
+            catch (Exception ex) { }
         }
 
         private void SaveRedisConfig()
         {
             var basePath = Main.StartupPath.Replace(@"\", "/");
-            using (var sw = new StreamWriter(basePath + "/conf/redis/gen.conf"))
-            {
-                sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
-                sw.WriteLine("logfile \"" + basePath + "/logs/redis/def.log\"");
-                if (RedisLogLevel.Value.Length > 0)
-                    sw.WriteLine("loglevel " + RedisLogLevel.Value);
+            try {
+                using (var sw = new StreamWriter(basePath + "/conf/redis/gen.conf"))
+                {
+                    sw.WriteLine("# DO NOT MODIFY!!! THIS FILE IS MANAGED BY THE WNE.\r\n");
+                    sw.WriteLine("logfile \"" + basePath + "/logs/redis/def.log\"");
+                    if (RedisLogLevel.Value.Length > 0)
+                        sw.WriteLine("loglevel " + RedisLogLevel.Value);
 
-                if (RedisBind.Value.Length > 0)
-                    sw.WriteLine("bind " + RedisBind.Value);
-                sw.WriteLine("port " + RedisPort.Value);
+                    if (RedisBind.Value.Length > 0)
+                        sw.WriteLine("bind " + RedisBind.Value);
+                    sw.WriteLine("port " + RedisPort.Value);
 
-                sw.WriteLine("dir \"" + basePath + "/data/redis/\"");
-                sw.WriteLine("pidfile \"" + basePath + "/tmp/redis.pid\"");
+                    sw.WriteLine("dir \"" + basePath + "/data/redis/\"");
+                    sw.WriteLine("pidfile \"" + basePath + "/tmp/redis.pid\"");
 
-                sw.WriteLine("include \"" + basePath + "/conf/redis/redis.conf\"");
+                    sw.WriteLine("include \"" + basePath + "/conf/redis/redis.conf\"");
+                }
             }
+            catch (Exception ex) { }
         }
     }
 }

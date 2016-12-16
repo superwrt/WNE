@@ -1,145 +1,246 @@
 /*
- * Copyright (c) 2014 - 2016, Kurt Cancemi (kurt@x64architecture.com)
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *  CertGen
+ * Written by Terra Yang <terra@superwrt.com>.
+ * Using mbedTLS-2.4 library.
+ * License: GPLv2
  */
 
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
 #endif
 
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
+#else
 #include <stdio.h>
+#define mbedtls_printf     printf
+#endif
 
-#include <openssl/pem.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#if defined(MBEDTLS_BIGNUM_C) && defined(MBEDTLS_ENTROPY_C) && \
+    defined(MBEDTLS_RSA_C) && defined(MBEDTLS_GENPRIME) && \
+    defined(MBEDTLS_FS_IO) && defined(MBEDTLS_CTR_DRBG_C)
+#include "mbedtls/x509_crt.h"
+#include "mbedtls/x509_csr.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/bignum.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/rsa.h"
 
-#define KEY_PUB "conf/cert.pem"
-#define KEY_PRV "conf/key.pem"
+#include <stdio.h>
+#include <string.h>
 
-int generate_keypair(int bits, int days)
+#define KEY_PRIV "key.pem"
+#define KEY_PUB  "key_pub.pem"
+#define KEY_CERT "cert.pem"
+
+#define KEY_SIZE 2048
+#define EXPONENT 65537
+
+#define DFL_NOT_BEFORE          "20010101000000"
+#define DFL_NOT_AFTER           "20301231235959"
+
+static int write_public_key(mbedtls_pk_context *key, const char *output_file)
 {
-	BIGNUM *bnexp = NULL;
-	EVP_PKEY *pKey = NULL;
-	RSA *rsa = NULL;
-	X509 *x509 = NULL;
-	X509_NAME *name;
-	X509_EXTENSION *ex;
-	FILE *fp = NULL;
-	int rv;
-	unsigned long exp = RSA_F4;
+	int ret;
+	FILE *f;
+	unsigned char output_buf[16000];
+	unsigned char *c = output_buf;
+	size_t len = 0;
 
-	if ((pKey = EVP_PKEY_new()) == NULL) {
-		printf("Error allocating EVP_PKEY struct\n");
-		goto err;
+	memset(output_buf, 0, 16000);
+
+	if ((ret = mbedtls_pk_write_pubkey_pem(key, output_buf, 16000)) != 0)
+		return(ret);
+
+	len = strlen((char *)output_buf);
+
+
+	if ((f = fopen(output_file, "wb")) == NULL)
+		return(-1);
+
+	if (fwrite(c, 1, len, f) != len)
+	{
+		fclose(f);
+		return(-1);
 	}
 
-	if ((rsa = RSA_new()) == NULL) {
-		printf("Error allocating RSA struct\n");
-		goto err;
+	fclose(f);
+
+	return(0);
+}
+static int write_private_key(mbedtls_pk_context *key, const char *output_file)
+{
+	int ret;
+	FILE *f;
+	unsigned char output_buf[16000];
+	unsigned char *c = output_buf;
+	size_t len = 0;
+
+	memset(output_buf, 0, 16000);
+
+	if ((ret = mbedtls_pk_write_key_pem(key, output_buf, 16000)) != 0)
+		return(ret);
+
+	len = strlen((char *)output_buf);
+
+
+	if ((f = fopen(output_file, "wb")) == NULL)
+		return(-1);
+
+	if (fwrite(c, 1, len, f) != len)
+	{
+		fclose(f);
+		return(-1);
 	}
-	if ((bnexp = BN_new()) == NULL) {
-		printf("Error allocating bignum struct\n");
-		goto err;
-	}
-	if (BN_set_word(bnexp, exp) != 1) {
-		printf("Error setting exponent\n");
-		goto err;
-	}
 
+	fclose(f);
 
-	rv = RSA_generate_key_ex(rsa, bits, bnexp, NULL);
-	if (rv != 1) {
-		printf("Error generating RSA key\n");
-		goto err;
-	}
-
-	EVP_PKEY_assign_RSA(pKey, rsa);
-
-	if ((x509 = X509_new()) == NULL) {
-		printf("Error allocating X509 struct\n");
-		goto err;
-	}
-
-	X509_set_version(x509, 3);
-	ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
-	X509_gmtime_adj(X509_get_notBefore(x509), 0);
-	X509_gmtime_adj(X509_get_notAfter(x509), (long)60 * 60 * 24 * days);
-	X509_set_pubkey(x509, pKey);
-
-	name = X509_get_subject_name(x509);
-
-	X509_NAME_add_entry_by_txt(name, "C",
-		MBSTRING_ASC, "Wne", -1, -1, 0);
-	X509_NAME_add_entry_by_txt(name, "CN",
-		MBSTRING_ASC, "Wne", -1, -1, 0);
-
-	X509_set_issuer_name(x509, name);
-
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
-	X509_add_ext(x509, ex, -1);
-	X509_EXTENSION_free(ex);
-
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_comment,
-		"Wne by Terra Yang");
-	X509_add_ext(x509, ex, -1);
-	X509_EXTENSION_free(ex);
-
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name,
-		"localhost");
-
-	X509_add_ext(x509, ex, -1);
-	X509_EXTENSION_free(ex);
-
-	X509_sign(x509, pKey, EVP_sha256());
-
-	if (!(fp = fopen(KEY_PUB, "w"))) {
-		printf("Error writing to public key file");
-		goto err;
-	}
-	if (PEM_write_X509(fp, x509) != 1) {
-		printf("Error while writing public key");
-		goto err;
-	}
-	fclose(fp);
-
-	if (!(fp = fopen(KEY_PRV, "w"))) {
-		printf("Error writing to private key file");
-		goto err;
-	}
-	if (PEM_write_PrivateKey(fp, pKey, NULL, NULL, 0, NULL, NULL) != 1) {
-		printf("Error while writing private key");
-	}
-	fclose(fp);
-
-	BN_free(bnexp);
-	X509_free(x509);
-	EVP_PKEY_free(pKey);
-
-	return 0;
-
-err:
-	BN_free(bnexp);
-	X509_free(x509);
-	EVP_PKEY_free(pKey);
-
-	return -1;
+	return(0);
 }
 
-int main(void)
+int write_certificate(mbedtls_x509write_cert *crt, const char *output_file,
+	int(*f_rng)(void *, unsigned char *, size_t),
+	void *p_rng)
 {
-	int rv;
-	rv = generate_keypair(2048, 365);
+	int ret;
+	FILE *f;
+	unsigned char output_buf[4096];
+	size_t len = 0;
 
-	return rv;
+	memset(output_buf, 0, 4096);
+	if ((ret = mbedtls_x509write_crt_pem(crt, output_buf, 4096, f_rng, p_rng)) < 0)
+		return(ret);
+
+	len = strlen((char *)output_buf);
+
+	if ((f = fopen(output_file, "w")) == NULL)
+		return(-1);
+
+	if (fwrite(output_buf, 1, len, f) != len)
+	{
+		fclose(f);
+		return(-1);
+	}
+
+	fclose(f);
+
+	return(0);
 }
+
+int main(int argc, char* argv[])
+{
+	int ret;
+	mbedtls_pk_context key;
+	//mbedtls_rsa_context rsa;
+	mbedtls_entropy_context entropy;
+	mbedtls_ctr_drbg_context ctr_drbg;
+	mbedtls_x509write_cert crt;
+	mbedtls_mpi serial;
+	FILE *fpub = NULL;
+	FILE *fpriv = NULL;
+	const char *pers = "rsa_genkey";
+
+	mbedtls_pk_init(&key);
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+
+	mbedtls_printf("\n  . Seeding the random number generator...");
+	fflush(stdout);
+
+	mbedtls_entropy_init(&entropy);
+	if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
+		(const unsigned char *)pers,
+		strlen(pers))) != 0)
+	{
+		mbedtls_printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
+		goto exit;
+	}
+
+	mbedtls_printf(" ok\n  . Generating the RSA key [ %d-bit ]...", KEY_SIZE);
+	fflush(stdout);
+
+	//mbedtls_rsa_init(mbedtls_pk_rsa(key)/*&rsa*/, MBEDTLS_RSA_PKCS_V15, 0 );
+
+	if ((ret = mbedtls_pk_setup(&key, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA))) != 0)
+	{
+		mbedtls_printf(" failed\n  !  mbedtls_pk_setup returned -0x%04x", -ret);
+		goto exit;
+	}
+
+	if ((ret = mbedtls_rsa_gen_key(mbedtls_pk_rsa(key)/*&rsa*/, mbedtls_ctr_drbg_random, &ctr_drbg, KEY_SIZE,
+		EXPONENT)) != 0)
+	{
+		mbedtls_printf(" failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret);
+		goto exit;
+	}
+
+	mbedtls_printf(" ok\n  . Write key files...");
+	if ((ret = write_private_key(&key, KEY_PRIV)) != 0)
+	{
+		mbedtls_printf(" failed\n");
+		goto exit;
+	}
+
+	if ((ret = write_public_key(&key, KEY_PUB)) != 0)
+	{
+		mbedtls_printf(" failed\n");
+		goto exit;
+	}
+
+	mbedtls_printf(" ok\n  . Write Cert file...");
+
+	mbedtls_x509write_crt_init(&crt);
+	mbedtls_x509write_crt_set_md_alg(&crt, MBEDTLS_MD_SHA256);
+	mbedtls_mpi_init(&serial);
+
+	mbedtls_x509write_crt_set_subject_key(&crt, &key);
+
+	mbedtls_x509write_crt_set_issuer_key(&crt, &key);
+	mbedtls_x509write_crt_set_issuer_name(&crt, "CN=CA,O=SuperWRT,C=WNE");
+	mbedtls_x509write_crt_set_basic_constraints(&crt, 0, -1);
+
+	mbedtls_x509write_crt_set_subject_name(&crt, "CN=Cert,O=SuperWRT,C=WNE");
+
+	mbedtls_mpi_read_string(&serial, 10, "1");
+	mbedtls_x509write_crt_set_serial(&crt, &serial);
+
+	mbedtls_x509write_crt_set_validity(&crt, DFL_NOT_BEFORE, DFL_NOT_AFTER);
+
+	mbedtls_x509write_crt_set_ns_cert_type(&crt,
+		MBEDTLS_X509_NS_CERT_TYPE_SSL_SERVER);
+
+	if ((ret = write_certificate(&crt, KEY_CERT,
+		mbedtls_ctr_drbg_random, &ctr_drbg)) != 0)
+	{
+		char buf[1024];
+		mbedtls_strerror(ret, buf, 1024);
+		mbedtls_printf(" failed\n  !  write_certifcate -0x%02x - %s\n\n", -ret, buf);
+		goto exit;
+	}
+
+	mbedtls_printf(" ok\n\n");
+
+exit:
+
+	if (fpub != NULL)
+		fclose(fpub);
+
+	if (fpriv != NULL)
+		fclose(fpriv);
+
+	mbedtls_rsa_free(mbedtls_pk_rsa(key)/*&rsa*/);
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+	mbedtls_entropy_free(&entropy);
+
+#if defined(_WIN32)
+	if (argc == 1) {
+		mbedtls_printf("  Press Enter to exit this program.\n");
+		fflush(stdout); getchar();
+	}
+#endif
+
+	return(ret);
+}
+#endif
