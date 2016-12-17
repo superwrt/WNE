@@ -243,4 +243,6 @@ exit:
 
 	return(ret);
 }
+#else
+#error "Config error!"
 #endif

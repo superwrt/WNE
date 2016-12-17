@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using wne.Config;
-using wne.UI;
+﻿using wne.UI;
 
 namespace wne.Services
 {

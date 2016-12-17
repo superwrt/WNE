@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 using wne.Config;
 using wne.Services;
-
+using System.IO;
 
 namespace wne.UI
 {
@@ -32,7 +32,7 @@ namespace wne.UI
             rtfLog = richTextBoxLog;
         }
 
-        private void initServices()
+        private void InitServices()
         {
             Settings.ReadSettings();
 
@@ -129,9 +129,33 @@ namespace wne.UI
                 StartServices();
         }
 
+        private void CheckEnverionment()
+        {
+            if (File.Exists(StartupPath + "/CertGen.exe") &&
+                !File.Exists(StartupPath + "/conf/keys/cert.pem"))
+            {
+                using (var ps = new Process())
+                {
+                    ps.StartInfo.FileName = StartupPath + "/CertGen.exe";
+                    ps.StartInfo.WorkingDirectory = StartupPath + "/conf/keys/";
+                    ps.StartInfo.Arguments = "y";
+                    ps.StartInfo.UseShellExecute = false;
+                    ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    ps.StartInfo.CreateNoWindow = true;
+                    ps.Start();
+                }
+            }
+            if (Settings.WnePath.Value != StartupPath)
+            {
+                Settings.WnePath.Value = StartupPath;
+                Settings.UpdateSettings();
+            }
+        }
+
         private void Main_Load(object sender, EventArgs e)
         {
-            initServices();
+            CheckEnverionment();
+            InitServices();
             try
             {
                 pictureBoxLogo.Image = Image.FromFile("mainlogo.png");

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-
-using wne.Library;
 using wne.UI;
 
 namespace wne.Config
@@ -17,6 +13,13 @@ namespace wne.Config
             Name = "editor",
             Description = "Editor Path",
             Value = "notepad.exe",
+        };
+        public Config<string> WnePath = new Config<string>
+        {
+            Section = "WNE",
+            Name = "wnepath",
+            Description = "WNE Path",
+            Value = "",
         };
         public Config<ushort> HttpPort = new Config<ushort>
         {
@@ -171,6 +174,7 @@ namespace wne.Config
         public Ini()
         {
             options.Add(Editor);
+            options.Add(WnePath);
             options.Add(HttpPort);
             options.Add(StartWithWindows);
             options.Add(AutoCheckForUpdates);
