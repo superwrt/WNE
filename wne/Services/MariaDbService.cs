@@ -28,12 +28,20 @@ namespace wne.Services
             var binDir = Main.StartupPath.Replace(@"\", "/") + "/mariadb/bin/";
             try
             {
-                if (!Directory.Exists(dataDir))
+                if (!Directory.Exists(dataDir+"mysql/"))
                 {
-                    Directory.CreateDirectory(dataDir);
-                    Process.Start(binDir +
-                        "mysql_install_db  -D -d \"" +
-                        Main.StartupPath + "/data/mariadb/\"");
+                    if (!Directory.Exists(dataDir))
+                        Directory.CreateDirectory(dataDir);
+
+                    Process ps = new Process();
+                    ps.StartInfo.FileName = binDir + "mysql_install_db.exe";
+                    ps.StartInfo.WorkingDirectory = Main.StartupPath ;
+                    ps.StartInfo.Arguments = "-D -d \"" + dataDir + "\"";
+                    ps.StartInfo.UseShellExecute = false;
+                    ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    ps.StartInfo.CreateNoWindow = true;
+                    ps.Start();
+                    ps.WaitForExit();
                 }
             }
             catch (Exception ex) { }

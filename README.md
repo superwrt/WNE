@@ -7,3 +7,21 @@ Developer can package the WNE and configure file togehter, then send it to end u
 
 Thanks for WNMP project. WNE used some codes from WNMP project.
 
+
+----------
+
+## Integrate softwares
+
+- Nginx 1.11.6
+- PHP 7.0.13 (Non Thread Safe + FastCGI)
+- MariaDB 10.1.19
+- MongoDB 3.4.0
+- Redis 3.0
+- Adminer 4.2.5
+
+## Prerequisites
+
+- Windows Vista/Server 2008 or higher version
+- .NET Framework 4
+- Visual Studio C++ 2015 (x86) Redistributable
+
