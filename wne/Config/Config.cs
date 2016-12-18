@@ -21,7 +21,7 @@ namespace wne.Config
 
         public void ReadIniValue(IniFile.IniFile iniFile)
         {
-            iniValue = iniFile.Section("foo").Get("baz");
+            iniValue = iniFile.Section(Section).Get(Name);
         }
 
         public void PrintIniOption(IniFile.IniFile iniFile)

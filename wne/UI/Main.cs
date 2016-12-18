@@ -34,8 +34,6 @@ namespace wne.UI
 
         private void InitServices()
         {
-            Settings.ReadSettings();
-
             phpServ.Setup(Settings);
             nginxServ.Setup(Settings);
             mariaServ.Setup(Settings);
@@ -131,6 +129,8 @@ namespace wne.UI
 
         private void CheckEnverionment()
         {
+            Settings.ReadSettings();
+
             if (File.Exists(StartupPath + "/CertGen.exe") &&
                 !File.Exists(StartupPath + "/conf/keys/cert.pem"))
             {

@@ -81,6 +81,7 @@ namespace wne.UI
 
             SetSettings();
             Settings.UpdateSettings();
+            StartWithWindows();
             this.Close();
         }
 
