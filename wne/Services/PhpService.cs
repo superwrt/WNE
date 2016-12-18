@@ -9,27 +9,31 @@ namespace wne.Services
 {
     class PhpService : Service
     {
+        public string verDir { get; set; }
+    
         public PhpService(string verDir="default")
         {
             this.serviceName = "PHP";
-            this.exeName = Main.StartupPath.Replace(@"\", "/") + "/php/"+ verDir + "/php-cgi.exe";
+            this.verDir = Main.StartupPath.Replace(@"\", "/") + "/php/" + verDir + "/";
+            this.exeName = this.verDir + "/php-cgi.exe";
             this.procName = "php-cgi";
             this.progName = "PHP"; 
             this.killStop = true;
             this.startArgs = "";
             this.stopArgs = "-s stop";
-            this.confDir = "/conf/php/";
-            this.logDir = "/logs/php/";
+            this.confDir = Main.StartupPath + "/conf/php/";
+            this.logDir = Main.StartupPath + "/logs/php/";
         }
 
         private void setVersionDir(string verDir)
         {
-            this.exeName = Main.StartupPath.Replace(@"\", "/") + "/php/" + verDir + "/php-cgi.exe";
+            this.verDir = Main.StartupPath.Replace(@"\", "/") + "/php/" + verDir +"/";
+            this.exeName = this.verDir + "/php-cgi.exe";
         }
 
         private void setCurlCAPath()
         {
-            string phpini = Main.StartupPath + "/php/php.ini";
+            string phpini = confDir + "/php.ini";
             if (!File.Exists(phpini))
                 return;
 
@@ -75,7 +79,7 @@ namespace wne.Services
             {
                 for (var i = 1; i <= ProcessCount; i++)
                 {
-                    StartProcess(exeName, $"-b localhost:{port} -c {phpini}");
+                    StartProcess(exeName, $"-b localhost:{port} -c \"{phpini}\"");
                     Main.Notice("Starting PHP " + i + "/" + ProcessCount + " on port: " + port, serviceName);
                     port++;
                 }

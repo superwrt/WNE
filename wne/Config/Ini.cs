@@ -229,16 +229,18 @@ namespace wne.Config
         public void ReadSettings()
         {
             var iniFile = new IniFile.IniFile(iniFileName);
-            if (iniFile.Sections.Length == 0)
-            {
-                UpdateSettings();
-                return;
-            }
+
             foreach (var option in options)
             {
                 option.ReadIniValue(iniFile);
                 option.Convert();
             }
+
+            if (WnePath.Value != Main.StartupPath)
+            {
+                UpdateSettings();
+            }
+            
             ReadEnverionments(iniFile);
         }
 
@@ -264,6 +266,7 @@ namespace wne.Config
             SaveMariaDbConfig();
             SaveMongoDbConfig();
             SaveRedisConfig();
+            new PhpConfig().CheckExtensions(Main.StartupPath + "/php/" + PhpVersionDir.Value, Main.StartupPath + "/conf/php", Main.StartupPath);
         }
 
         private void SaveNginxPHPConfig()

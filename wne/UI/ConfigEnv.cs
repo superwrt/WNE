@@ -271,6 +271,7 @@ namespace wne.UI
             {
                 phpConfig.UserPHPExtentionValues[i] = checkedListBoxPhpExts.GetItemChecked(i);
             }
+            phpConfig.PHPExtensionDir = Main.StartupPath + "/php/" + comboBoxPhpVersion.Text + "/ext";
             phpConfig.SaveIniOptions();
         }
 

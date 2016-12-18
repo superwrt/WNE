@@ -15,6 +15,8 @@ namespace wne.Config
         public bool[] UserPHPExtentionValues;
         public string[] phpExtName;
         public PHPExtension[] PHPExtensions;
+        public string PHPExtensionDir;
+        private string PHPExtensionDirOld;
 
         private string ExtensionPath;
         private string IniFilePath;
@@ -23,6 +25,20 @@ namespace wne.Config
         private void LoadIni()
         {
             TmpIniFile = File.ReadAllText(IniFilePath);
+        }
+
+        public void CheckExtensions(string phpBinPath, string phpConfigPath, string startUpPath)
+        {
+            if (!Directory.Exists(phpBinPath))
+                return;
+
+            LoadExtensions(phpBinPath, phpConfigPath);
+            if (PHPExtensionDir == null ||
+                PHPExtensionDir.IndexOf(startUpPath) != 0)
+            {
+                PHPExtensionDir = phpBinPath + "/ext";
+                SaveIniOptions();
+            } 
         }
 
         public void LoadExtensions(string phpBinPath, string phpConfigPath)
@@ -75,6 +91,21 @@ namespace wne.Config
                             break;
                         }
                     }
+                    if (str.StartsWith("extension_dir"))
+                    {
+                        PHPExtensionDir = str.Substring(str.IndexOf("=")+1).Trim();
+                        if (PHPExtensionDir[0] == '\"')
+                        {
+                            PHPExtensionDir = str.Substring(1, str.Length-2);
+                        }
+                        PHPExtensionDirOld = str;
+                    } else if (PHPExtensionDirOld == null &&
+                        str.Length > 13 &&
+                        str[0] == ';' &&
+                        str.Substring(1).TrimStart().StartsWith("extension_dir"))
+                    {
+                        PHPExtensionDirOld = str;
+                    }
                 }
             }
         }
@@ -110,6 +141,8 @@ namespace wne.Config
                     }
                 }
             }
+            if (PHPExtensionDir != null && PHPExtensionDirOld != null)
+                TmpIniFile = TmpIniFile.Replace(PHPExtensionDirOld, "extension_dir = \"" + PHPExtensionDir + "\"");
             File.WriteAllText(IniFilePath, TmpIniFile);
         }
     }
