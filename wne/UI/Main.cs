@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using wne.Config;
 using wne.Services;
 using System.IO;
+using System.Threading;
 
 namespace wne.UI
 {
@@ -106,7 +107,14 @@ namespace wne.UI
         private void notifyIconCtrl_DoubleClick(object sender, EventArgs e)
         {
             this.Show();
+            this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
+        }
+
+        void OnProgramStarted(object state, bool timeout)
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
         }
 
         /// <summary>
@@ -154,6 +162,8 @@ namespace wne.UI
 
         private void Main_Load(object sender, EventArgs e)
         {
+            Control.CheckForIllegalCrossThreadCalls = false;//FIXME
+            ThreadPool.RegisterWaitForSingleObject(Program.ProgramStarted, OnProgramStarted, null, -1, false);
             CheckEnverionment();
             InitServices();
             try

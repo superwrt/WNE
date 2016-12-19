@@ -1,21 +1,33 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Threading;
 
 namespace wne
 {
     static class Program
     {
+        public static EventWaitHandle ProgramStarted;
+
         /// <summary>
         /// 应用程序的主入口点。
         /// </summary>
         [STAThread]
         static void Main(string[] args)
         {
-            bool start = false;
+            bool createNew;
+            ProgramStarted = new EventWaitHandle(false, EventResetMode.AutoReset, "WNE-SuperWRT", out createNew);
+            if (!createNew)
+            {
+                ProgramStarted.Set();
+                return;
+            }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             OSVersionCheck();
+
+            bool start = false;
             foreach (String s in args){
                 if (string.Compare(s, "/start") == 0)
                     start = true;
