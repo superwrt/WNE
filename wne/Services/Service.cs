@@ -16,13 +16,14 @@ namespace wne.Services
         public string exeName { get; set; }    // Location of the executable file
         public string procName { get; set; }   // Name of the process
         public string progName { get; set; }   // User-friendly name of the program 
-        public string startArgs { get; set; }  // Start Arguments
-        public string stopArgs { get; set; }   // Stop Arguments if KillStop is false
-        public bool killStop { get; set; }     // Kill process instead of stopping it gracefully
         public string confDir { get; set; }    // Directory where all the programs configuration files are
         public string logDir { get; set; }     // Directory where all the programs log files are
         public string dataDir { get; set; }
         public string tmpDir { get; set; }
+        protected string startArgs { get; set; }  // Start Arguments
+        protected string stopArgs { get; set; }   // Stop Arguments if KillStop is false
+        protected bool killStop { get; set; }     // Kill process instead of stopping it gracefully
+        protected bool intStop { get; set; }
         protected Ini Settings;
 
         private Stack<Process> procs = new Stack<Process>();
@@ -55,6 +56,8 @@ namespace wne.Services
             ps.StartInfo.FileName = exe;
             ps.StartInfo.Arguments = args;
             ps.StartInfo.UseShellExecute = false;
+            if (intStop)
+                ps.StartInfo.RedirectStandardInput = true;
             ps.StartInfo.RedirectStandardOutput = true;
             ps.StartInfo.WorkingDirectory = Main.StartupPath;
             ps.StartInfo.CreateNoWindow = true;
@@ -90,6 +93,11 @@ namespace wne.Services
             while (procs.Count > 0)
             {
                 var ps = procs.Pop();
+                if (intStop && !ps.HasExited)
+                {
+                    ps.StandardInput.WriteLine("\x3");
+                    ps.WaitForExit(10000);
+                }
                 if (killStop && !ps.HasExited)
                 {
                     ps.Kill();
