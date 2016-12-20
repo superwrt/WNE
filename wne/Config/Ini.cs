@@ -239,6 +239,8 @@ namespace wne.Config
             if (WnePath.Value != Main.StartupPath)
             {
                 UpdateSettings();
+                new PhpConfig().CheckExtensions(Main.StartupPath + "/php/" + PhpVersionDir.Value,
+                    Main.StartupPath + "/conf/php", Main.StartupPath);
             }
             
             ReadEnverionments(iniFile);
@@ -266,7 +268,6 @@ namespace wne.Config
             SaveMariaDbConfig();
             SaveMongoDbConfig();
             SaveRedisConfig();
-            new PhpConfig().CheckExtensions(Main.StartupPath + "/php/" + PhpVersionDir.Value, Main.StartupPath + "/conf/php", Main.StartupPath);
         }
 
         private void SaveNginxPHPConfig()

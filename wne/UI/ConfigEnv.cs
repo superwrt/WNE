@@ -110,11 +110,11 @@ namespace wne.UI
 
         private void SaveSettings()
         {
+            SavePHPExtOptions();
+
             SaveOptions();
             SaveEnvironment();
             Settings.UpdateSettings();
-            
-            SavePHPExtOptions();
         }
 
         private void ConfigEnv_Load(object sender, EventArgs e)
