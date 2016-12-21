@@ -60,9 +60,9 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(45, 140);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(89, 12);
+            this.label3.Size = new System.Drawing.Size(113, 12);
             this.label3.TabIndex = 2;
-            this.label3.Text = "License: GPLv2";
+            this.label3.Text = "License: Apache v2";
             // 
             // label4
             // 
