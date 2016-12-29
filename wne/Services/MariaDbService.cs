@@ -35,13 +35,13 @@ namespace wne.Services
             this.exeName = binDir + "/mysqld.exe";
             this.procName = "mysqld";
             this.progName = "MariaDB";
-            this.startArgs = "--defaults-file=\""+Main.StartupPath+"/conf/mariadb/my.ini\"";
+            this.startArgs = "--defaults-file=\""+Main.StartupPath+ "/conf/mariadb/my.ini\" --standalone";
             this.stopArgs = "";
             this.killStop = true;
+            this.waitStop = true;
             this.confDir = Main.StartupPath + "/conf/mariadb/";
             this.dataDir = Main.StartupPath + "/data/mariadb/";
             this.logDir = Main.StartupPath + "/logs/mariadb/";
-            
         }
 
         public override void Stop()
@@ -51,7 +51,7 @@ namespace wne.Services
                 Process ps = new Process();
                 ps.StartInfo.FileName = binDir + "mysqladmin.exe";
                 ps.StartInfo.WorkingDirectory = Main.StartupPath;
-                ps.StartInfo.Arguments = "--defaults-file=\"" + Main.StartupPath + "/conf/mariadb/my.ini\" -u root shutdown";
+                ps.StartInfo.Arguments = "--defaults-file=\"" + Main.StartupPath + "/conf/mariadb/my.ini\" -uroot shutdown";
                 ps.StartInfo.UseShellExecute = false;
                 ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 ps.StartInfo.CreateNoWindow = true;

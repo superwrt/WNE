@@ -63,7 +63,7 @@ namespace wne.Services
                 string orginal = reg.Match(file[i]).ToString();
                 if (orginal == String.Empty)
                     continue;
-                string replace = "\"" + Main.StartupPath + @"\contrib\cacert.pem" + "\"";
+                string replace = "\"" + Main.StartupPath + @"\conf\keys\cert.pem" + "\"";
                 file[i] = file[i].Replace(orginal, replace);
             }
             using (var sw = new StreamWriter(phpini))

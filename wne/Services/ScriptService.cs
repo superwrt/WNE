@@ -22,18 +22,21 @@ namespace wne.Services
 {
     class ScriptService : Service
     {
+        public string binDir { get; set; }
+
         public ScriptService()
         {
-            this.exeName = Main.StartupPath.Replace(@"\", "/") + "/scripts/";
+            this.binDir = Main.StartupPath.Replace(@"\", "/") + "/conf/scripts/";
             this.procName = "scripts";
             this.progName = "Scripts";
+            this.useShell = true;
         }
 
         public override void Start()
         {
             try
             {
-                StartProcess(exeName + "start.bat", startArgs, true, false);
+                StartProcess(binDir + "start.bat", startArgs, true, false);
                 Main.Notice("Started " + progName, serviceName);
             }
             catch (Exception ex)
@@ -46,7 +49,7 @@ namespace wne.Services
         {
             try
             {
-                StartProcess(exeName + "stop.bat", stopArgs, true, false);
+                StartProcess(binDir + "stop.bat", stopArgs, true, false);
                 Main.Notice("Stopped " + progName, serviceName);
             }
             catch (Exception ex)

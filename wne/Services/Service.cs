@@ -39,7 +39,8 @@ namespace wne.Services
         protected string startArgs { get; set; }  // Start Arguments
         protected string stopArgs { get; set; }   // Stop Arguments if KillStop is false
         protected bool killStop { get; set; }     // Kill process instead of stopping it gracefully
-        protected bool intStop { get; set; }
+        protected bool waitStop { get; set; }
+        protected bool useShell { get; set; }
         protected Ini Settings;
 
         private Stack<Process> procs = new Stack<Process>();
@@ -71,10 +72,11 @@ namespace wne.Services
             var ps = new Process();
             ps.StartInfo.FileName = exe;
             ps.StartInfo.Arguments = args;
-            ps.StartInfo.UseShellExecute = false;
-            if (intStop)
+            ps.StartInfo.UseShellExecute = this.useShell;
+            if (waitStop)
                 ps.StartInfo.RedirectStandardInput = true;
-            ps.StartInfo.RedirectStandardOutput = true;
+            if (!useShell)
+                ps.StartInfo.RedirectStandardOutput = true;
             ps.StartInfo.WorkingDirectory = Main.StartupPath;
             ps.StartInfo.CreateNoWindow = true;
             ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
@@ -109,10 +111,10 @@ namespace wne.Services
             while (procs.Count > 0)
             {
                 var ps = procs.Pop();
-                if (intStop && !ps.HasExited)
+                if (waitStop && !ps.HasExited)
                 {
-                    ps.StandardInput.WriteLine("\x3");
-                    ps.WaitForExit(10000);
+                    //ps.StandardInput.WriteLine("\x3");
+                    ps.WaitForExit(30000);
                 }
                 if (killStop && !ps.HasExited)
                 {
