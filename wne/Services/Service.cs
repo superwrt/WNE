@@ -80,6 +80,7 @@ namespace wne.Services
             ps.StartInfo.WorkingDirectory = Main.StartupPath;
             ps.StartInfo.CreateNoWindow = true;
             ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            //ps.StartInfo.ErrorDialog = false;
 
             foreach (KeyValuePair<string, string> item in envs)
                 ps.StartInfo.EnvironmentVariables.Add(item.Key, item.Value);

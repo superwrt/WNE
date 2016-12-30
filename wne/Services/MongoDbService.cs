@@ -45,18 +45,24 @@ namespace wne.Services
         {
             try
             {
-                Process ps = new Process();
-                ps.StartInfo.FileName = binDir + "mongo.exe";
-                ps.StartInfo.WorkingDirectory = Main.StartupPath;
-                ps.StartInfo.Arguments = "127.0.0.1:" + Settings.MongoDbPort.Value+"/admin --eval \"db.shutdownServer()\"";
-                ps.StartInfo.UseShellExecute = false;
-                ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                ps.StartInfo.CreateNoWindow = true;
-                ps.Start();
-                if (!ps.WaitForExit(60000))
-                    ps.Kill();
+                using (var ps = new Process())
+                {
+                    ps.StartInfo.FileName = binDir + "mongo.exe";
+                    ps.StartInfo.WorkingDirectory = Main.StartupPath;
+                    ps.StartInfo.Arguments = "127.0.0.1:" + Settings.MongoDbPort.Value + "/admin --eval \"db.shutdownServer()\"";
+                    ps.StartInfo.UseShellExecute = false;
+                    ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    ps.StartInfo.CreateNoWindow = true;
+                    ps.StartInfo.ErrorDialog = false;
+                    ps.Start();
+                    if (!ps.WaitForExit(60000))
+                        ps.Kill();
+                }
+            }catch(Exception ex)
+            {
+                Main.Error("Stop(): " + ex.Message, serviceName);
             }
-            catch (Exception ex) { }
+
             base.Stop();
         }
     }

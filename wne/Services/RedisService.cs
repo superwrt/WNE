@@ -42,18 +42,23 @@ namespace wne.Services
             var binDir = Main.StartupPath.Replace(@"\", "/") + "/redis/";
             try
             {
-                Process ps = new Process();
-                ps.StartInfo.FileName = binDir + "redis-cli.exe";
-                ps.StartInfo.WorkingDirectory = Main.StartupPath;
-                ps.StartInfo.Arguments = "-p " + Settings.RedisPort.Value + " SHUTDOWN";
-                ps.StartInfo.UseShellExecute = false;
-                ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                ps.StartInfo.CreateNoWindow = true;
-                ps.Start();
-                if (!ps.WaitForExit(10000))
-                    ps.Kill();
+                using (var ps = new Process())
+                {
+                    ps.StartInfo.FileName = binDir + "redis-cli.exe";
+                    ps.StartInfo.WorkingDirectory = Main.StartupPath;
+                    ps.StartInfo.Arguments = "-p " + Settings.RedisPort.Value + " SHUTDOWN";
+                    ps.StartInfo.UseShellExecute = false;
+                    ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    ps.StartInfo.CreateNoWindow = true;
+                    ps.StartInfo.ErrorDialog = false;
+                    ps.Start();
+                    if (!ps.WaitForExit(10000))
+                        ps.Kill();
+                }
+            }catch(Exception ex)
+            {
+                Main.Error("Stop(): " + ex.Message, serviceName);
             }
-            catch (Exception ex) { }
             base.Stop();
         }
 

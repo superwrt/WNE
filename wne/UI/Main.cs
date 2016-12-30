@@ -23,6 +23,7 @@ using wne.Config;
 using wne.Services;
 using System.IO;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace wne.UI
 {
@@ -59,9 +60,19 @@ namespace wne.UI
             scriptServ.Setup(Settings);
         }
 
+        //http://blogs.msdn.com/b/oldnewthing/archive/2012/06/14/10319617.aspx
+        //http://bartdesmet.net/blogs/bart/archive/2006/10/25/Windows-Vista-_2D00_-ShutdownBlockReasonCreate-in-C_2300_.aspx
+        [DllImport("user32.dll")]
+        public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
+
+        [DllImport("user32.dll")]
+        public extern static bool ShutdownBlockReasonDestroy(IntPtr hWnd);
+
         private void StartServices()
         {
             buttonStartStop.Enabled = false;
+
+            ShutdownBlockReasonCreate(this.Handle, "Services are running");
 
             if (Settings.UseServicePhp.Value)
                 phpServ.Start();
@@ -92,7 +103,9 @@ namespace wne.UI
             mongoServ.Stop();
             mariaServ.Stop();
             phpServ.Stop();
-            
+
+            ShutdownBlockReasonDestroy(this.Handle);
+
             servsRunning = false;
             buttonStartStop.Text = "Start";
 

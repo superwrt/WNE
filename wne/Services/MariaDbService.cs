@@ -32,7 +32,7 @@ namespace wne.Services
             //Run in --standalone mode. Must stop by mysqladmin -u root (-p) shutdown;
             this.serviceName = "MariaDB";
             this.binDir = Main.StartupPath.Replace(@"\", "/") + "/mariadb/bin/";
-            this.exeName = binDir + "/mysqld.exe";
+            this.exeName = binDir + "mysqld.exe";
             this.procName = "mysqld";
             this.progName = "MariaDB";
             this.startArgs = "--defaults-file=\""+Main.StartupPath+ "/conf/mariadb/my.ini\" --standalone";
@@ -46,44 +46,49 @@ namespace wne.Services
 
         public override void Stop()
         {
-            try
+            using (var ps = new Process())
             {
-                Process ps = new Process();
                 ps.StartInfo.FileName = binDir + "mysqladmin.exe";
                 ps.StartInfo.WorkingDirectory = Main.StartupPath;
                 ps.StartInfo.Arguments = "--defaults-file=\"" + Main.StartupPath + "/conf/mariadb/my.ini\" -uroot shutdown";
                 ps.StartInfo.UseShellExecute = false;
                 ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 ps.StartInfo.CreateNoWindow = true;
+                ps.StartInfo.ErrorDialog = false;
                 ps.Start();
                 if (!ps.WaitForExit(60000))
                     ps.Kill();
             }
-            catch (Exception ex) { }
+
             base.Stop();
         }
 
         public override void Setup(Ini Settings)
         {
-            try
+            if (!Directory.Exists(dataDir+"mysql/"))
             {
-                if (!Directory.Exists(dataDir+"mysql/"))
+                try
                 {
                     if (!Directory.Exists(dataDir))
                         Directory.CreateDirectory(dataDir);
 
-                    Process ps = new Process();
-                    ps.StartInfo.FileName = binDir + "mysql_install_db.exe";
-                    ps.StartInfo.WorkingDirectory = Main.StartupPath ;
-                    ps.StartInfo.Arguments = "-D -d \"" + dataDir + "\"";
-                    ps.StartInfo.UseShellExecute = false;
-                    ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    ps.StartInfo.CreateNoWindow = true;
-                    ps.Start();
-                    ps.WaitForExit();
+                    using (var ps = new Process())
+                    {
+                        ps.StartInfo.FileName = binDir + "mysql_install_db.exe";
+                        ps.StartInfo.WorkingDirectory = Main.StartupPath;
+                        ps.StartInfo.Arguments = "-D -d \"" + dataDir + "\"";
+                        ps.StartInfo.UseShellExecute = false;
+                        ps.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                        ps.StartInfo.CreateNoWindow = true;
+                        ps.Start();
+                        ps.WaitForExit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Main.Error("Setup(): " + ex.Message, serviceName);
                 }
             }
-            catch (Exception ex) { }
             base.Setup(Settings);
 
         }
