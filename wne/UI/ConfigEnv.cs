@@ -127,6 +127,7 @@ namespace wne.UI
         private void SaveSettings()
         {
             SavePHPExtOptions();
+            SaveNginxConfig();
 
             SaveOptions();
             SaveEnvironment();
@@ -338,6 +339,14 @@ namespace wne.UI
             {
                 var name = conf.Key.Substring(0, conf.Key.LastIndexOf("."));
                 comboBoxNginxSite.Items.Add(name);
+            }
+        }
+
+        private void SaveNginxConfig()
+        {
+            foreach (var conf in nginxConfig)
+            {
+                File.WriteAllText(conf.Key, conf.Value);
             }
         }
 
