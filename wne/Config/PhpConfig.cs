@@ -86,25 +86,17 @@ namespace wne.Config
                 {
                     for (var i = 0; i < phpExtName.Length; i++)
                     {
-                        if (str.StartsWith(";extension=" + phpExtName[i]))
-                        {
+                        if (str.StartsWith(";extension=" + phpExtName[i])) {
                             PHPExtensions[i] = PHPExtension.Disabled;
-                            break;
-                        }
-                        if (str.StartsWith("extension=" + phpExtName[i]))
-                        {
+                        } else if (str.StartsWith("extension=" + phpExtName[i])) {
                             PHPExtensions[i] = PHPExtension.Enabled;
-                            break;
-                        }
-                        if (str.StartsWith(";zend_extension=" + phpExtName[i]))
-                        {
+                        } else if (str.StartsWith(";zend_extension=" + phpExtName[i])) {
                             PHPExtensions[i] = PHPExtension.Disabled | PHPExtension.ZendExt;
-                            break;
-                        }
-                        if (str.StartsWith("zend_extension=" + phpExtName[i]))
-                        {
+                        } else if (str.StartsWith("zend_extension=" + phpExtName[i])) {
                             PHPExtensions[i] = PHPExtension.Enabled | PHPExtension.ZendExt;
-                            break;
+                        }
+                        if (PHPExtensions[i].HasFlag(PHPExtension.Enabled)) {
+                            UserPHPExtentionValues[i] = true;
                         }
                     }
                     if (str.StartsWith("extension_dir"))
